@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador GitHub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: #0a0e27;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: #1a1f3a;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        .menu-btn {
+            background: linear-gradient(90deg, #ff006e, #8338ec);
+            border: none;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        h1 {
+            font-size: 1.5em;
+            background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff, #06ffa5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: -100%;
+            top: 0;
+            width: 85%;
+            max-width: 350px;
+            height: 100vh;
+            background: #1a1f3a;
+            z-index: 200;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+        }
+        
+        .sidebar.open {
+            left: 0;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 150;
+            display: none;
+        }
+        
+        .overlay.show {
+            display: block;
+        }
+        
+        .close-btn {
+            background: #ff006e;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .tab:nth-child(1) { background: #ff006e; color: #fff; }
+        .tab:nth-child(2) { background: #8338ec; color: #fff; }
+        .tab:nth-child(3) { background: #3a86ff; color: #fff; }
+        
+        .tab.active { 
+            box-shadow: 0 0 0 3px #06ffa5;
+        }
+        
+        .section-title {
+            color: #06ffa5;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #06ffa5;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #8338ec;
+            border-radius: 8px;
+            background: #0a0e27;
+            color: #fff;
+            font-size: 15px;
+        }
+        
+        input::placeholder {
+            color: #999;
+        }
+        
+        select option {
+            background: #1a1f3a;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #06ffa5, #3a86ff);
+            color: #0a0e27;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .container {
+            padding: 15px;
+            padding-top: 10px;
+        }
+        
+        .card {
+            background: #1a1f3a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 5px solid #ff006e;
+            cursor: pointer;
+        }
+        
+        .card:nth-child(even) { border-left-color: #8338ec; }
+        .card:nth-child(3n) { border-left-color: #3a86ff; }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            color: #06ffa5;
+            font-size: 1.1em;
+            font-weight: bold;
+            flex: 1;
+        }
+        
+        .expand-icon {
+            color: #06ffa5;
+            font-size: 1.5em;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .card-content {
+            max-height: 0;
+            overflow: hidden;
+        }
+        
+        .card.expanded .card-content {
+            max-height: 2000px;
+            margin-top: 15px;
+        }
+        
+        .card.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+        
+        .description {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .stat {
+            background: #0a0e27;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .topics {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .topic {
+            background: #8338ec;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        
+        .link-btn {
+            display: inline-block;
+            background: #06ffa5;
+            color: #0a0e27;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 12px;
+        }
+        
+        .error {
+            background: #ff006e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 15px;
+            text-align: center;
+        }
+        
+        .hidden { display: none; }
+        
+        .user-card {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .user-card img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 3px solid #06ffa5;
+        }
+        
+        .readme {
+            background: #0a0e27;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            border-left: 3px solid #06ffa5;
+        }
+        
+        .readme-title {
+            color: #06ffa5;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        
+        .filter-label {
+            color: #ccc;
+            font-size: 13px;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="menu-btn" id="menuBtn">☰ FILTROS</button>
+        <h1>GITHUB</h1>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="sidebar" id="sidebar">
+        <button class="close-btn" id="closeBtn">✕ CERRAR</button>
+        
+        <div class="tabs">
+            <button class="tab active" data-type="repositories">REPOS</button>
+            <button class="tab" data-type="users">USERS</button>
+            <button class="tab" data-type="code">CODE</button>
+        </div>
+
+        <div class="section-title">BUSQUEDA</div>
+        <input type="text" id="searchInput" placeholder="Buscar...">
+
+        <div id="repoFilters">
+            <div class="section-title">FILTROS AVANZADOS</div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Lenguaje</label>
+                <select id="language">
+                    <option value="">Todos</option>
+                    <option value="JavaScript">JavaScript</option>
+                    <option value="Python">Python</option>
+                    <option value="Java">Java</option>
+                    <option value="TypeScript">TypeScript</option>
+                    <option value="C++">C++</option>
+                    <option value="C#">C#</option>
+                    <option value="PHP">PHP</option>
+                    <option value="Ruby">Ruby</option>
+                    <option value="Go">Go</option>
+                    <option value="Rust">Rust</option>
+                    <option value="Kotlin">Kotlin</option>
+                    <option value="Swift">Swift</option>
+                    <option value="Dart">Dart</option>
+                    <option value="Shell">Shell</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Estrellas minimas</label>
+                <input type="number" id="minStars" placeholder="Ej: 100">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Forks minimos</label>
+                <input type="number" id="minForks" placeholder="Ej: 10">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Ordenar por</label>
+                <select id="sortBy">
+                    <option value="stars">Stars</option>
+                    <option value="forks">Forks</option>
+                    <option value="updated">Actualizacion</option>
+                    <option value="created">Creacion</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Usuario/Organizacion</label>
+                <input type="text" id="user" placeholder="Ej: facebook">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Topic</label>
+                <input type="text" id="topic" placeholder="Ej: machine-learning">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Licencia</label>
+                <select id="license">
+                    <option value="">Cualquiera</option>
+                    <option value="mit">MIT</option>
+                    <option value="apache-2.0">Apache 2.0</option>
+                    <option value="gpl-3.0">GPL 3.0</option>
+                    <option value="bsd">BSD</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Tamaño (KB)</label>
+                <input type="number" id="minSize" placeholder="Min KB">
+                <input type="number" id="maxSize" placeholder="Max KB">
+            </div>
+        </div>
+
+        <div id="userFilters" class="hidden">
+            <div class="section-title">FILTROS DE USUARIOS</div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Repositorios minimos</label>
+                <input type="number" id="minRepos" placeholder="Ej: 5">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Seguidores minimos</label>
+                <input type="number" id="minFollowers" placeholder="Ej: 10">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Ubicacion</label>
+                <input type="text" id="location" placeholder="Ej: Colombia">
+            </div>
+        </div>
+
+        <div id="codeFilters" class="hidden">
+            <div class="section-title">FILTROS DE CODIGO</div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Extension</label>
+                <input type="text" id="extension" placeholder="Ej: js, py, java">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Nombre de archivo</label>
+                <input type="text" id="filename" placeholder="Ej: index.js">
+            </div>
+        </div>
+
+        <button class="btn" id="searchBtn">BUSCAR</button>
+    </div>
+
+    <div class="container">
+        <div id="error" class="error hidden"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        var searchType = 'repositories';
+        var currentResults = [];
+        
+        var menuBtn = document.getElementById('menuBtn');
+        var closeBtn = document.getElementById('closeBtn');
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('overlay');
+
+        menuBtn.addEventListener('click', function() {
+            sidebar.classList.add('open');
+            overlay.classList.add('show');
+        });
+
+        closeBtn.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        }
+
+        var tabs = document.querySelectorAll('.tab');
+        for (var i = 0; i < tabs.length; i++) {
+            tabs[i].addEventListener('click', function() {
+                for (var j = 0; j < tabs.length; j++) {
+                    tabs[j].classList.remove('active');
+                }
+                this.classList.add('active');
+                searchType = this.dataset.type;
+                
+                document.getElementById('repoFilters').style.display = searchType === 'repositories' ? 'block' : 'none';
+                document.getElementById('userFilters').style.display = searchType === 'users' ? 'block' : 'none';
+                document.getElementById('codeFilters').style.display = searchType === 'code' ? 'block' : 'none';
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') search();
+        });
+
+        document.getElementById('searchBtn').addEventListener('click', search);
+
+        function search() {
+            var query = document.getElementById('searchInput').value.trim();
+            var errorDiv = document.getElementById('error');
+            var resultsDiv = document.getElementById('results');
+            var btn = document.getElementById('searchBtn');
+
+            errorDiv.classList.add('hidden');
+            resultsDiv.innerHTML = '';
+
+            if (!query) {
+                showError('Ingresa algo para buscar');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'BUSCANDO...';
+
+            var searchQuery = query;
+            
+            if (searchType === 'repositories') {
+                var lang = document.getElementById('language').value;
+                var stars = document.getElementById('minStars').value;
+                var forks = document.getElementById('minForks').value;
+                var user = document.getElementById('user').value;
+                var topic = document.getElementById('topic').value;
+                var license = document.getElementById('license').value;
+                var minSize = document.getElementById('minSize').value;
+                var maxSize = document.getElementById('maxSize').value;
+                
+                if (lang) searchQuery += '+language:' + lang;
+                if (stars) searchQuery += '+stars:>=' + stars;
+                if (forks) searchQuery += '+forks:>=' + forks;
+                if (user) searchQuery += '+user:' + user;
+                if (topic) searchQuery += '+topic:' + topic;
+                if (license) searchQuery += '+license:' + license;
+                if (minSize) searchQuery += '+size:>=' + minSize;
+                if (maxSize) searchQuery += '+size:<=' + maxSize;
+            } else if (searchType === 'users') {
+                var minRepos = document.getElementById('minRepos').value;
+                var minFollowers = document.getElementById('minFollowers').value;
+                var location = document.getElementById('location').value;
+                
+                if (minRepos) searchQuery += '+repos:>=' + minRepos;
+                if (minFollowers) searchQuery += '+followers:>=' + minFollowers;
+                if (location) searchQuery += '+location:' + location;
+            } else if (searchType === 'code') {
+                var extension = document.getElementById('extension').value;
+                var filename = document.getElementById('filename').value;
+                
+                if (extension) searchQuery += '+extension:' + extension;
+                if (filename) searchQuery += '+filename:' + filename;
+            }
+
+            var sortBy = document.getElementById('sortBy').value;
+            var url = '';
+            
+            if (searchType === 'users') {
+                url = 'https://api.github.com/search/users?q=' + encodeURIComponent(searchQuery);
+            } else if (searchType === 'code') {
+                url = 'https://api.github.com/search/code?q=' + encodeURIComponent(searchQuery);
+            } else {
+                url = 'https://api.github.com/search/repositories?q=' + encodeURIComponent(searchQuery) + '&sort=' + sortBy + '&order=desc';
+            }
+
+            fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    closeSidebar();
+                    if (data.items && data.items.length > 0) {
+                        currentResults = data.items;
+                        displayResults(data.items);
+                    } else {
+                        showNoResults();
+                    }
+                })
+                .catch(function(err) {
+                    showError('Error: ' + err.message);
+                })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.textContent = 'BUSCAR';
+                });
+        }
+
+        function toggleCard(cardElement, index) {
+            var isExpanded = cardElement.classList.contains('expanded');
+            
+            if (isExpanded) {
+                cardElement.classList.remove('expanded');
+            } else {
+                var allCards = document.querySelectorAll('.card');
+                for (var i = 0; i < allCards.length; i++) {
+                    allCards[i].classList.remove('expanded');
+                }
+                cardElement.classList.add('expanded');
+                
+                if (searchType === 'repositories' && currentResults[index]) {
+                    loadReadme(currentResults[index], cardElement);
+                }
+            }
+        }
+
+        function loadReadme(repo, cardElement) {
+            var readmeDiv = cardElement.querySelector('.readme-content');
+            if (readmeDiv.textContent !== 'Cargando README...') {
+                return;
+            }
+            
+            var readmeUrl = 'https://api.github.com/repos/' + repo.full_name + '/readme';
+            
+            fetch(readmeUrl)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    var content = atob(data.content);
+                    var preview = content.substring(0, 500);
+                    if (content.length > 500) preview += '...';
+                    readmeDiv.textContent = preview;
+                })
+                .catch(function() {
+                    readmeDiv.textContent = 'No hay README disponible';
+                });
+        }
+
+        function displayResults(items) {
+            var resultsDiv = document.getElementById('results');
+            
+            if (searchType === 'repositories') {
+                for (var i = 0; i < items.length; i++) {
+                    var repo = items[i];
+                    var card = document.createElement('div');
+                    card.className = 'card';
+                    card.setAttribute('data-index', i);
+                    
+                    var topics = '';
+                    if (repo.topics && repo.topics.length > 0) {
+                        var topicsList = repo.topics.slice(0, 5);
+                        var topicsHTML = '';
+                        for (var j = 0; j < topicsList.length; j++) {
+                            topicsHTML += '<span class="topic">' + topicsList[j] + '</span>';
+                        }
+                        topics = '<div class="topics">' + topicsHTML + '</div>';
+                    }
+                    
+                    var langHTML = repo.language ? '<span class="stat">💻 ' + repo.language + '</span>' : '';
+                    var sizeKB = Math.round(repo.size);
+                    
+                    card.innerHTML = 
+                        '<div class="card-header">' +
+                            '<div class="card-title">' + repo.full_name + '</div>' +
+                            '<div class="expand-icon">▼</div>' +
+                        '</div>' +
+                        '<div class="card-content">' +
+                            '<div class="description">' + (repo.description || 'Sin descripcion') + '</div>' +
+                            '<div class="stats">' +
+                                langHTML +
+                                '<span class="stat">⭐ ' + formatNum(repo.stargazers_count) + '</span>' +
+                                '<span class="stat">🔱 ' + formatNum(repo.forks_count) + '</span>' +
+                                '<span class="stat">📦 ' + sizeKB + ' KB</span>' +
+                            '</div>' +
+                            topics +
+                            '<div class="readme">' +
+                                '<div class="readme-title">README:</div>' +
+                                '<div class="readme-content">Cargando README...</div>' +
+                            '</div>' +
+                            '<a href="' + repo.html_url + '" target="_blank" class="link-btn">VER EN GITHUB</a>' +
+                        '</div>';
+                    
+                    card.addEventListener('click', function() {
+                        var idx = parseInt(this.getAttribute('data-index'));
+                        toggleCard(this, idx);
+                    });
+                    
+                    resultsDiv.appendChild(card);
+                }
+            } else if (searchType === 'users') {
+                for (var i = 0; i < items.length; i++) {
+                    var user = items[i];
+                    var card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = 
+                        '<div class="card-header">' +
+                            '<div class="card-title">' + user.login + '</div>' +
+                            '<div class="expand-icon">▼</div>' +
+                        '</div>' +
+                        '<div class="card-content">' +
+                            '<div class="user-card">' +
+                                '<img src="' + user.avatar_url + '" alt="' + user.login + '">' +
+                                '<div class="user-info">' +
+                                    '<div style="color: #ccc; margin-bottom: 8px;">Score: ' + user.score.toFixed(0) + '</div>' +
+                                    '<a href="' + user.html_url + '" target="_blank" class="link-btn">VER PERFIL</a>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
+                    
+                    card.addEventListener('click', function() {
+                        toggleCard(this, 0);
+                    });
+                    
+                    resultsDiv.appendChild(card);
+                }
+            } else {
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    var card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = 
+                        '<div class="card-header">' +
+                            '<div class="card-title">' + item.name + '</div>' +
+                            '<div class="expand-icon">▼</div>' +
+                        '</div>' +
+                        '<div class="card-content">' +
+                            '<div class="description">' + item.repository.full_name + '</div>' +
+                            '<div style="color: #999; font-size: 14px; margin-bottom: 12px;">' + item.path + '</div>' +
+                            '<a href="' + item.html_url + '" target="_blank" class="link-btn">VER CODIGO</a>' +
+                        '</div>';
+                    
+                    card.addEventListener('click', function() {
+                        toggleCard(this, 0);
+                    });
+                    
+                    resultsDiv.appendChild(card);
+                }
+            }
+        }
+
+        function showError(msg) {
+            var errorDiv = document.getElementById('error');
+            errorDiv.textContent = msg;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function showNoResults() {
+            var resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="no-results">No se encontraron resultados</div>';
+        }
+
+        function formatNum(num) {
+            return num >= 1000 ? (num / 1000).toFixed(1) + 'k' : num;
+        }
+    </script>
+</body>
+</html>
