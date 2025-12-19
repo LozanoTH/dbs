@@ -1,1 +1,338 @@
-home pege 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index of /recursos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: #f8f8f8;
+            border-bottom: 1px solid #ddd;
+            padding: 15px 20px;
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: normal;
+            color: #333;
+        }
+
+        .info {
+            padding: 15px 20px;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f8f8;
+            border-bottom: 2px solid #ddd;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px 20px;
+            font-weight: normal;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: #eee;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        td {
+            padding: 8px 20px;
+            font-size: 13px;
+        }
+
+        .icon {
+            width: 20px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .file-name {
+            color: #333;
+        }
+
+        .file-size {
+            color: #666;
+        }
+
+        .file-date {
+            color: #999;
+        }
+
+        footer {
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            border-top: 1px solid #ddd;
+            background: #f8f8f8;
+        }
+
+        .search-box {
+            padding: 15px 20px;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #0066cc;
+        }
+
+        .parent-dir {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Index of /recursos</h1>
+        </header>
+
+        <div class="info">
+            <strong>Servidor:</strong> LocalServer/1.0 | <strong>Recursos disponibles:</strong> <span id="totalFiles">0</span>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Buscar recursos...">
+        </div>
+
+        <table id="fileTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Nombre</th>
+                    <th onclick="sortTable(1)">Tamaño</th>
+                    <th onclick="sortTable(2)">Última modificación</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody id="fileList">
+            </tbody>
+        </table>
+
+        <footer>
+            LocalServer/1.0 - Servidor de Recursos HTML
+        </footer>
+    </div>
+
+    <script>
+        // Base de datos de recursos
+        const recursos = [
+            {
+                name: 'index.html',
+                size: '4.2 KB',
+                date: '2024-12-15 10:30',
+                desc: 'Página principal',
+                type: 'html'
+            },
+            {
+                name: 'dashboard.html',
+                size: '8.5 KB',
+                date: '2024-12-16 14:20',
+                desc: 'Panel de control',
+                type: 'html'
+            },
+            {
+                name: 'documentacion.html',
+                size: '15.3 KB',
+                date: '2024-12-17 09:45',
+                desc: 'Documentación del proyecto',
+                type: 'html'
+            },
+            {
+                name: 'formulario.html',
+                size: '6.1 KB',
+                date: '2024-12-14 16:50',
+                desc: 'Formulario de contacto',
+                type: 'html'
+            },
+            {
+                name: 'galeria.html',
+                size: '12.7 KB',
+                date: '2024-12-13 11:15',
+                desc: 'Galería de imágenes',
+                type: 'html'
+            },
+            {
+                name: 'login.html',
+                size: '3.8 KB',
+                date: '2024-12-18 08:00',
+                desc: 'Página de inicio de sesión',
+                type: 'html'
+            },
+            {
+                name: 'perfil.html',
+                size: '7.2 KB',
+                date: '2024-12-12 13:40',
+                desc: 'Perfil de usuario',
+                type: 'html'
+            },
+            {
+                name: 'api-docs.html',
+                size: '22.1 KB',
+                date: '2024-12-11 15:25',
+                desc: 'Documentación de API',
+                type: 'html'
+            },
+            {
+                name: 'error-404.html',
+                size: '2.3 KB',
+                date: '2024-12-10 10:10',
+                desc: 'Página de error 404',
+                type: 'html'
+            },
+            {
+                name: 'admin.html',
+                size: '18.9 KB',
+                date: '2024-12-09 12:55',
+                desc: 'Panel de administración',
+                type: 'html'
+            }
+        ];
+
+        function getIcon(type) {
+            return type === 'html' ? '📄' : '📁';
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('fileList');
+            tbody.innerHTML = '';
+
+            // Agregar directorio padre
+            const parentRow = document.createElement('tr');
+            parentRow.className = 'parent-dir';
+            parentRow.innerHTML = `
+                <td><span class="icon">📁</span><a href="#">../</a></td>
+                <td class="file-size">-</td>
+                <td class="file-date">-</td>
+                <td>Directorio padre</td>
+            `;
+            tbody.appendChild(parentRow);
+
+            // Agregar archivos
+            data.forEach(file => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="icon">${getIcon(file.type)}</span><a href="#" class="file-name">${file.name}</a></td>
+                    <td class="file-size">${file.size}</td>
+                    <td class="file-date">${file.date}</td>
+                    <td>${file.desc}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('totalFiles').textContent = data.length;
+        }
+
+        // Búsqueda en tiempo real
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = recursos.filter(file => 
+                file.name.toLowerCase().includes(query) || 
+                file.desc.toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        });
+
+        // Ordenar tabla
+        let sortDirection = {};
+        function sortTable(columnIndex) {
+            const tbody = document.getElementById('fileList');
+            const rows = Array.from(tbody.querySelectorAll('tr')).slice(1); // Skip parent dir
+            
+            sortDirection[columnIndex] = !sortDirection[columnIndex];
+            const direction = sortDirection[columnIndex] ? 1 : -1;
+
+            rows.sort((a, b) => {
+                const aVal = a.cells[columnIndex].textContent.trim();
+                const bVal = b.cells[columnIndex].textContent.trim();
+                
+                if (columnIndex === 1) {
+                    // Sort by size
+                    const aSize = parseFloat(aVal);
+                    const bSize = parseFloat(bVal);
+                    return (aSize - bSize) * direction;
+                }
+                
+                return aVal.localeCompare(bVal) * direction;
+            });
+
+            const parentRow = tbody.querySelector('.parent-dir');
+            tbody.innerHTML = '';
+            tbody.appendChild(parentRow);
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        // Inicializar
+        renderTable(recursos);
+
+        // Simular clicks en archivos
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('file-name')) {
+                e.preventDefault();
+                alert(`Abriendo: ${e.target.textContent}\n\nEn una implementación real, esto abriría el archivo.`);
+            }
+        });
+    </script>
+</body>
+</html>
